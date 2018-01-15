@@ -18,7 +18,7 @@ int main(int argc, char** argv)
   int num_data = 0;
   int n_threads = 1;
   float selection_ratio = 0.0f;
-  char *input_path;
+  char *input_path = (char *)std::string("../sample_input.txt").data();
 
   int c;
   while((c = getopt(argc, argv, "n:w:t:s:i:")) != -1) {
@@ -51,8 +51,12 @@ int main(int argc, char** argv)
 
   ifstream ifs;
   ifs.open(input_path);
-  if(!ifs) 
+  if(!ifs) {
     cout << "input loading error!" << endl;
+
+    delete[] keys;
+    exit(-1);
+  }
 
   for(int i=0; i<num_data; ++i)
     ifs >> keys[i]; 

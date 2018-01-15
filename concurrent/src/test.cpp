@@ -17,7 +17,7 @@ int main(int argc, char** argv)
   // Parsing arguments
   int numData = 0;
   int n_threads = 1;
-  char *input_path;
+  char *input_path = (char *)std::string("../sample_input.txt").data();
 
   int c;
   while((c = getopt(argc, argv, "n:w:t:i:")) != -1) {

@@ -245,7 +245,14 @@ class page{
       return ret;
     }
 
-    bool remove_bak(btree* bt, entry_key_t key, bool only_rebalance = false, bool with_lock = true) {
+    /*
+     * Although we implemented the rebalancing of B+-Tree, it is currently blocked for the performance.
+     * Please refer to the follow.
+     * Chi, P., Lee, W. C., & Xie, Y. (2014, August). 
+     * Making B+-tree efficient in PCM-based main memory. In Proceedings of the 2014
+     * international symposium on Low power electronics and design (pp. 69-74). ACM.
+     */
+    bool remove_rebalancing(btree* bt, entry_key_t key, bool only_rebalance = false, bool with_lock = true) {
       if(with_lock) {
         hdr.mtx->lock();
       }
@@ -287,11 +294,6 @@ class page{
 
         // Remove the key from this node
         bool ret = remove_key(key);
-
-        if(with_lock) {
-          hdr.mtx->unlock();
-        }
-        return true;
 
         if(!should_rebalance) {
           if(with_lock) {
