@@ -113,7 +113,9 @@ class header{
     uint8_t switch_counter;     // 1 bytes
     uint8_t is_deleted;         // 1 bytes
     int16_t last_index;         // 2 bytes
-    std::mutex *mtx;      // 8 bytes
+    std::mutex *mtx;            // 8 bytes
+    entry_key_t highest;        // 8 bytes
+    uint64_t dummy[3];          // 24 bytes
 
     friend class page;
     friend class btree;
@@ -154,7 +156,7 @@ const int count_in_line = CACHE_LINE_SIZE / sizeof(entry);
 
 class page{
   private:
-    header hdr;  // header in persistent memory, 16 bytes
+    header hdr;  // header in persistent memory, 64 bytes
     entry records[cardinality]; // slots in persistent memory, 16 bytes * n
 
   public:
@@ -589,13 +591,23 @@ class page{
         // If this node has a sibling node,
         if(hdr.sibling_ptr && (hdr.sibling_ptr != invalid_sibling)) {
           // Compare this key with the first key of the sibling
-          if(key > hdr.sibling_ptr->records[0].key) {
-            if(with_lock) { 
-              hdr.mtx->unlock(); // Unlock the write lock
+            if (hdr.leftmost_ptr == NULL) {     // leaf node
+                if(key > hdr.sibling_ptr->records[0].key) {
+                    if(with_lock) {
+                        hdr.mtx->unlock(); // Unlock the write lock
+                    }
+                    return hdr.sibling_ptr->store(bt, NULL, key, right, 
+                            true, with_lock, invalid_sibling);
+                }
+            } else {
+                if(key > hdr.sibling_ptr->hdr.highest) {    // internal node
+                    if(with_lock) {
+                        hdr.mtx->unlock(); // Unlock the write lock
+                    }
+                    return hdr.sibling_ptr->store(bt, NULL, key, right, 
+                            true, with_lock, invalid_sibling);
+                }
             }
-            return hdr.sibling_ptr->store(bt, NULL, key, right, 
-                true, with_lock, invalid_sibling);
-          }
         }
 
         register int num_entries = count();
@@ -629,6 +641,7 @@ class page{
               sibling->insert_key(records[i].key, records[i].ptr, &sibling_cnt, false);
             }
             sibling->hdr.leftmost_ptr = (page*) records[m].ptr;
+            sibling->hdr.highest = records[m].key;
           }
 
           sibling->hdr.sibling_ptr = hdr.sibling_ptr;
@@ -883,7 +896,7 @@ class page{
         } while(hdr.switch_counter != previous_switch_counter);
 
         if((t = (char *)hdr.sibling_ptr) != NULL) {
-          if(key >= ((page *)t)->records[0].key)
+          if(key >= ((page *)t)->hdr.highest)
             return t;
         }
 
