@@ -169,7 +169,7 @@ class page{
 
     // this is called when tree grows
     page(page* left, entry_key_t key, page* right, uint32_t level = 0) {
-      hdr.leftmost_ptr = left;  
+      hdr.leftmost_ptr = left;
       hdr.level = level;
       records[0].key = key;
       records[0].ptr = (char*) right;
@@ -214,15 +214,15 @@ class page{
 
     inline bool remove_key(entry_key_t key) {
       // Set the switch_counter
-      if(IS_FORWARD(hdr.switch_counter)) 
+      if(IS_FORWARD(hdr.switch_counter))
         ++hdr.switch_counter;
 
       bool shift = false;
       int i;
       for(i = 0; records[i].ptr != NULL; ++i) {
         if(!shift && records[i].key == key) {
-          records[i].ptr = (i == 0) ? 
-            (char *)hdr.leftmost_ptr : records[i - 1].ptr; 
+          records[i].ptr = (i == 0) ?
+            (char *)hdr.leftmost_ptr : records[i - 1].ptr;
           shift = true;
         }
 
@@ -233,8 +233,8 @@ class page{
           // flush
           uint64_t records_ptr = (uint64_t)(&records[i]);
           int remainder = records_ptr % CACHE_LINE_SIZE;
-          bool do_flush = (remainder == 0) || 
-            ((((int)(remainder + sizeof(entry)) / CACHE_LINE_SIZE) == 1) && 
+          bool do_flush = (remainder == 0) ||
+            ((((int)(remainder + sizeof(entry)) / CACHE_LINE_SIZE) == 1) &&
              ((remainder + sizeof(entry)) % CACHE_LINE_SIZE) != 0);
           if(do_flush) {
             clflush((char *)records_ptr, CACHE_LINE_SIZE);
@@ -261,7 +261,7 @@ class page{
     /*
      * Although we implemented the rebalancing of B+-Tree, it is currently blocked for the performance.
      * Please refer to the follow.
-     * Chi, P., Lee, W. C., & Xie, Y. (2014, August). 
+     * Chi, P., Lee, W. C., & Xie, Y. (2014, August).
      * Making B+-tree efficient in PCM-based main memory. In Proceedings of the 2014
      * international symposium on Low power electronics and design (pp. 69-74). ACM.
      */
