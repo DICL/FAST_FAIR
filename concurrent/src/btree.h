@@ -115,7 +115,7 @@ class header{
     int16_t last_index;         // 2 bytes
     std::mutex *mtx;            // 8 bytes
     entry_key_t highest;        // 8 bytes
-    uint64_t dummy[3];          // 24 bytes
+    uint64_t dummy[1];          // 24 bytes
 
     friend class page;
     friend class btree;
@@ -591,22 +591,12 @@ class page{
         // If this node has a sibling node,
         if(hdr.sibling_ptr && (hdr.sibling_ptr != invalid_sibling)) {
           // Compare this key with the first key of the sibling
-            if (hdr.leftmost_ptr == NULL) {     // leaf node
-                if(key > hdr.sibling_ptr->records[0].key) {
-                    if(with_lock) {
-                        hdr.mtx->unlock(); // Unlock the write lock
-                    }
-                    return hdr.sibling_ptr->store(bt, NULL, key, right, 
-                            true, with_lock, invalid_sibling);
+            if(key >= hdr.sibling_ptr->hdr.highest) {    // internal node
+                if(with_lock) {
+                    hdr.mtx->unlock(); // Unlock the write lock
                 }
-            } else {
-                if(key > hdr.sibling_ptr->hdr.highest) {    // internal node
-                    if(with_lock) {
-                        hdr.mtx->unlock(); // Unlock the write lock
-                    }
-                    return hdr.sibling_ptr->store(bt, NULL, key, right, 
-                            true, with_lock, invalid_sibling);
-                }
+                return hdr.sibling_ptr->store(bt, NULL, key, right, 
+                        true, with_lock, invalid_sibling);
             }
         }
 
@@ -635,6 +625,7 @@ class page{
             for(int i=m; i<num_entries; ++i){ 
               sibling->insert_key(records[i].key, records[i].ptr, &sibling_cnt, false);
             }
+            sibling->hdr.highest = records[m].key;
           }
           else{ // internal node
             for(int i=m+1;i<num_entries;++i){ 
@@ -843,7 +834,7 @@ class page{
           return ret;
         }
 
-        if((t = (char *)hdr.sibling_ptr) && key >= ((page *)t)->records[0].key)
+        if((t = (char *)hdr.sibling_ptr) && key >= ((page *)t)->hdr.highest)
           return t;
 
         return NULL;
