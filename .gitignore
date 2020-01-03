@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+# tags files
+GPATH
+GTAGS
+GRTAGS
