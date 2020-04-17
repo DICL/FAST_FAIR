@@ -113,7 +113,9 @@ class header{
     uint8_t switch_counter;     // 1 bytes
     uint8_t is_deleted;         // 1 bytes
     int16_t last_index;         // 2 bytes
-    std::mutex *mtx;      // 8 bytes
+    std::mutex *mtx;            // 8 bytes
+    entry_key_t highest;        // 8 bytes
+    uint64_t dummy[1];          // 24 bytes
 
     friend class page;
     friend class btree;
@@ -154,7 +156,7 @@ const int count_in_line = CACHE_LINE_SIZE / sizeof(entry);
 
 class page{
   private:
-    header hdr;  // header in persistent memory, 16 bytes
+    header hdr;  // header in persistent memory, 64 bytes
     entry records[cardinality]; // slots in persistent memory, 16 bytes * n
 
   public:
@@ -167,7 +169,7 @@ class page{
 
     // this is called when tree grows
     page(page* left, entry_key_t key, page* right, uint32_t level = 0) {
-      hdr.leftmost_ptr = left;  
+      hdr.leftmost_ptr = left;
       hdr.level = level;
       records[0].key = key;
       records[0].ptr = (char*) right;
@@ -212,15 +214,15 @@ class page{
 
     inline bool remove_key(entry_key_t key) {
       // Set the switch_counter
-      if(IS_FORWARD(hdr.switch_counter)) 
+      if(IS_FORWARD(hdr.switch_counter))
         ++hdr.switch_counter;
 
       bool shift = false;
       int i;
       for(i = 0; records[i].ptr != NULL; ++i) {
         if(!shift && records[i].key == key) {
-          records[i].ptr = (i == 0) ? 
-            (char *)hdr.leftmost_ptr : records[i - 1].ptr; 
+          records[i].ptr = (i == 0) ?
+            (char *)hdr.leftmost_ptr : records[i - 1].ptr;
           shift = true;
         }
 
@@ -231,8 +233,8 @@ class page{
           // flush
           uint64_t records_ptr = (uint64_t)(&records[i]);
           int remainder = records_ptr % CACHE_LINE_SIZE;
-          bool do_flush = (remainder == 0) || 
-            ((((int)(remainder + sizeof(entry)) / CACHE_LINE_SIZE) == 1) && 
+          bool do_flush = (remainder == 0) ||
+            ((((int)(remainder + sizeof(entry)) / CACHE_LINE_SIZE) == 1) &&
              ((remainder + sizeof(entry)) % CACHE_LINE_SIZE) != 0);
           if(do_flush) {
             clflush((char *)records_ptr, CACHE_LINE_SIZE);
@@ -259,7 +261,7 @@ class page{
     /*
      * Although we implemented the rebalancing of B+-Tree, it is currently blocked for the performance.
      * Please refer to the follow.
-     * Chi, P., Lee, W. C., & Xie, Y. (2014, August). 
+     * Chi, P., Lee, W. C., & Xie, Y. (2014, August).
      * Making B+-tree efficient in PCM-based main memory. In Proceedings of the 2014
      * international symposium on Low power electronics and design (pp. 69-74). ACM.
      */
@@ -589,13 +591,13 @@ class page{
         // If this node has a sibling node,
         if(hdr.sibling_ptr && (hdr.sibling_ptr != invalid_sibling)) {
           // Compare this key with the first key of the sibling
-          if(key > hdr.sibling_ptr->records[0].key) {
-            if(with_lock) { 
-              hdr.mtx->unlock(); // Unlock the write lock
+            if(key >= hdr.sibling_ptr->hdr.highest) {    // internal node
+                if(with_lock) {
+                    hdr.mtx->unlock(); // Unlock the write lock
+                }
+                return hdr.sibling_ptr->store(bt, NULL, key, right, 
+                        true, with_lock, invalid_sibling);
             }
-            return hdr.sibling_ptr->store(bt, NULL, key, right, 
-                true, with_lock, invalid_sibling);
-          }
         }
 
         register int num_entries = count();
@@ -623,12 +625,14 @@ class page{
             for(int i=m; i<num_entries; ++i){ 
               sibling->insert_key(records[i].key, records[i].ptr, &sibling_cnt, false);
             }
+            sibling->hdr.highest = records[m].key;
           }
           else{ // internal node
             for(int i=m+1;i<num_entries;++i){ 
               sibling->insert_key(records[i].key, records[i].ptr, &sibling_cnt, false);
             }
             sibling->hdr.leftmost_ptr = (page*) records[m].ptr;
+            sibling->hdr.highest = records[m].key;
           }
 
           sibling->hdr.sibling_ptr = hdr.sibling_ptr;
@@ -830,7 +834,7 @@ class page{
           return ret;
         }
 
-        if((t = (char *)hdr.sibling_ptr) && key >= ((page *)t)->records[0].key)
+        if((t = (char *)hdr.sibling_ptr) && key >= ((page *)t)->hdr.highest)
           return t;
 
         return NULL;
@@ -883,7 +887,7 @@ class page{
         } while(hdr.switch_counter != previous_switch_counter);
 
         if((t = (char *)hdr.sibling_ptr) != NULL) {
-          if(key >= ((page *)t)->records[0].key)
+          if(key >= ((page *)t)->hdr.highest)
             return t;
         }
 
