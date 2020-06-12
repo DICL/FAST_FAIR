@@ -7,6 +7,8 @@
    enhancements or updates to the Software. All rights, title to and ownership
    interest in the Software, including all intellectual property rights therein
    shall remain in UNIST. 
+
+   Please use at your own risk.
 */
 
 #include <unistd.h>
@@ -982,7 +984,7 @@ char *btree::btree_search(entry_key_t key){
     }
   }
 
-  if(!t || (char *)t != (char *)key) {
+  if(!t) {
     printf("NOT FOUND %lu, t = %x\n", key, t);
     return NULL;
   }
