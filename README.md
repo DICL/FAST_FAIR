@@ -5,7 +5,7 @@
 Folders of interest:
 
 - `single-no-ordering`: In-memory B-tree w/o any ordering constraints
-- `single-fast-fair`: Paper version of the NVM B-tree, with both FAST & FAIR optimizations
+- `single-fast-fair`: Paper version of the NVM B-tree, w/ both FAST & FAIR optimizations
 - `single-full-ordering`: B-tree w/ full ordering constaints, i.e., w/o FAST optimization
 
 
@@ -29,15 +29,15 @@ We strongly recommend to refer to the paper for the details.
   * concurrent - a multi-threaded version with std::mutex in C++11
 
 * How to run (single)
-1. git clone https://github.com/DICL/FAST_FAIR.git
-2. cd FAST_FAIR/single
-3. make
-4. `./btree -n [the # of data] -w [write latency of NVM] -i [path]` (e.g. ./btree -n 10000 -w 300 -i ~/input.txt)
+    1. git clone https://github.com/DICL/FAST_FAIR.git
+    2. cd FAST_FAIR/single
+    3. make
+    4. `./btree -n [the # of data] -w [write latency of NVM] -i [path]` (e.g. ./btree -n 10000 -w 300 -i ~/input.txt)
 
 * How to run (concurrent)
-1. git clone https://github.com/DICL/FAST_FAIR.git
-2. cd FAST_FAIR/concurrent
-3. make
-4. There are two versions of concurrent test programs - One is only search and only insertion, the other is a mixed workload.
-    1. `./btree_concurrent -n [the # of data] -w [write latency of NVM] -i [input path] -t [the # of threads]` (e.g. ./btree -n 10000 -w 300 -i ~/input.txt -t 16)
-    2. `./btree_concurrent_mixed -n [the # of data] -w [write latency of NVM] -i [input path] -t [the # of threads]` (e.g. ./btree -n 10000 -w 300 -i ~/input.txt -t 16)
+    1. git clone https://github.com/DICL/FAST_FAIR.git
+    2. cd FAST_FAIR/concurrent
+    3. make
+    4. There are two versions of concurrent test programs - One is only search and only insertion, the other is a mixed workload.
+        1. `./btree_concurrent -n [the # of data] -w [write latency of NVM] -i [input path] -t [the # of threads]` (e.g. ./btree -n 10000 -w 300 -i ~/input.txt -t 16)
+        2. `./btree_concurrent_mixed -n [the # of data] -w [write latency of NVM] -i [input path] -t [the # of threads]` (e.g. ./btree -n 10000 -w 300 -i ~/input.txt -t 16)
