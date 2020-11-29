@@ -167,7 +167,8 @@ public:
 
   void *operator new(size_t size) {
     void *ret;
-    posix_memalign(&ret, 64, size);
+    int err = posix_memalign(&ret, 64, size);
+    assert(err == 0);
     return ret;
   }
 
@@ -218,10 +219,11 @@ public:
         // flush
         uint64_t records_ptr = (uint64_t)(&records[i]);
         int remainder = records_ptr % CACHE_LINE_SIZE;
-        bool do_flush =
-            (remainder == 0) ||
-            ((((int)(remainder + sizeof(entry)) / CACHE_LINE_SIZE) == 1) &&
-             ((remainder + sizeof(entry)) % CACHE_LINE_SIZE) != 0);
+        // [Proj 3] Full ordering constraints.
+        bool do_flush = true;
+            // (remainder == 0) ||
+            // ((((int)(remainder + sizeof(entry)) / CACHE_LINE_SIZE) == 1) &&
+            //  ((remainder + sizeof(entry)) % CACHE_LINE_SIZE) != 0);
         if (do_flush) {
           clflush((char *)records_ptr, CACHE_LINE_SIZE);
         }
@@ -453,10 +455,11 @@ public:
             uint64_t records_ptr = (uint64_t)(&records[i + 1]);
 
             int remainder = records_ptr % CACHE_LINE_SIZE;
-            bool do_flush =
-                (remainder == 0) ||
-                ((((int)(remainder + sizeof(entry)) / CACHE_LINE_SIZE) == 1) &&
-                 ((remainder + sizeof(entry)) % CACHE_LINE_SIZE) != 0);
+            // [Proj 3] Full ordering constraints.
+            bool do_flush = true;
+                // (remainder == 0) ||
+                // ((((int)(remainder + sizeof(entry)) / CACHE_LINE_SIZE) == 1) &&
+                //  ((remainder + sizeof(entry)) % CACHE_LINE_SIZE) != 0);
             if (do_flush) {
               clflush((char *)records_ptr, CACHE_LINE_SIZE);
               to_flush_cnt = 0;
@@ -780,9 +783,9 @@ public:
   // print a node
   void print() {
     if (hdr.leftmost_ptr == NULL)
-      printf("[%d] leaf %x \n", this->hdr.level, this);
+      printf("[%d] leaf %p \n", this->hdr.level, this);
     else
-      printf("[%d] internal %x \n", this->hdr.level, this);
+      printf("[%d] internal %p \n", this->hdr.level, this);
     printf("last_index: %d\n", hdr.last_index);
     printf("switch_counter: %d\n", hdr.switch_counter);
     printf("search direction: ");
@@ -792,12 +795,12 @@ public:
       printf("<-\n");
 
     if (hdr.leftmost_ptr != NULL)
-      printf("%x ", hdr.leftmost_ptr);
+      printf("%p ", hdr.leftmost_ptr);
 
     for (int i = 0; records[i].ptr != NULL; ++i)
-      printf("%ld,%x ", records[i].key, records[i].ptr);
+      printf("%ld,%p ", records[i].key, records[i].ptr);
 
-    printf("%x ", hdr.sibling_ptr);
+    printf("%p ", hdr.sibling_ptr);
 
     printf("\n");
   }
@@ -847,7 +850,7 @@ char *btree::btree_search(entry_key_t key) {
   }
 
   if (!t) {
-    printf("NOT FOUND %lu, t = %x\n", key, t);
+    printf("NOT FOUND %lu, t = %p\n", key, t);
     return NULL;
   }
 
@@ -967,7 +970,7 @@ void btree::btree_search_range(entry_key_t min, entry_key_t max,
 void btree::printAll() {
   int total_keys = 0;
   page *leftmost = (page *)root;
-  printf("root: %x\n", root);
+  printf("root: %p\n", root);
   if (root) {
     do {
       page *sibling = leftmost;

@@ -1,4 +1,16 @@
 # FAST_FAIR
+
+## Folder Structure
+
+Folders of interest:
+
+- `single-no-ordering`: In-memory B-tree w/o any ordering constraints
+- `single-fast-fair`: Paper version of the NVM B-tree, with both FAST & FAIR optimizations
+- `single-full-ordering`: B-tree w/ full ordering constaints, i.e., w/o FAST optimization
+
+
+## Original README
+
 Implementation of the paper, "__Endurable Transient Inconsistency in Byte-Addressable Persistent B+-Tree__".
 
 The paper is to appear in [FAST 2018](https://www.usenix.org/conference/fast18).

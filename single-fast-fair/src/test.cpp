@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
                              (end.tv_nsec - start.tv_nsec);
     elapsed_time /= 1000;
 
-    printf("INSERT elapsed_time: %ld, Avg: %f\n", elapsed_time,
+    printf("INSERT elapsed_time: %lld, Avg: %f\n", elapsed_time,
            (double)elapsed_time / num_data);
   }
 
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
                              (end.tv_nsec - start.tv_nsec);
     elapsed_time /= 1000;
 
-    printf("SEARCH elapsed_time: %ld, Avg: %f\n", elapsed_time,
+    printf("SEARCH elapsed_time: %lld, Avg: %f\n", elapsed_time,
            (double)elapsed_time / num_data);
   }
 
