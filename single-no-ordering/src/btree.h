@@ -26,16 +26,22 @@
 #include <unistd.h>
 #include <vector>
 
-#define PAGESIZE 512
 
-#define CPU_FREQ_MHZ (1994)
-#define DELAY_IN_NS (1000)
+#define PAGESIZE 512
 #define CACHE_LINE_SIZE 64
-#define QUERY_NUM 25
+#define CPU_FREQ_MHZ (1994)
+
 
 #define IS_FORWARD(c) (c % 2 == 0)
 
 using entry_key_t = int64_t;
+
+
+// [Proj 3] Using Quartz emulator.
+bool use_quartz = false;
+
+unsigned long write_latency_in_ns = 0;
+
 
 static inline void cpu_pause() { __asm__ volatile("pause" ::: "memory"); }
 
@@ -49,31 +55,33 @@ static inline unsigned long read_tsc(void) {
   return var;
 }
 
-unsigned long write_latency_in_ns = 0;
-unsigned long long search_time_in_insert = 0;
-unsigned int gettime_cnt = 0;
-unsigned long long clflush_time_in_insert = 0;
-unsigned long long update_time_in_insert = 0;
-int clflush_cnt = 0;
-int node_cnt = 0;
 
 using namespace std;
+
 
 inline void mfence() { asm volatile("mfence" ::: "memory"); }
 
 inline void clflush(char *data, int len) {
   volatile char *ptr = (char *)((unsigned long)data & ~(CACHE_LINE_SIZE - 1));
+  
   mfence();
+  
   for (; ptr < data + len; ptr += CACHE_LINE_SIZE) {
     unsigned long etsc =
         read_tsc() + (unsigned long)(write_latency_in_ns * CPU_FREQ_MHZ / 1000);
+
     asm volatile("clflush %0" : "+m"(*(volatile char *)ptr));
-    while (read_tsc() < etsc)
-      cpu_pause();
-    //++clflush_cnt;
+
+    // [Proj 3] Using Quartz emulator.
+    if (!use_quartz) {
+      while (read_tsc() < etsc)
+        cpu_pause();
+    }
   }
+
   mfence();
 }
+
 
 class page;
 
