@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
   char *input_path = (char *)std::string("../sample_input.txt").data();
 
   int c;
-  while ((c = getopt(argc, argv, "n:w:t:s:i:q:")) != -1) {
+  while ((c = getopt(argc, argv, "n:w:t:s:i:q")) != -1) {
     switch (c) {
     case 'n':
       num_data = atoi(optarg);
@@ -67,6 +67,8 @@ int main(int argc, char **argv) {
     ifs >> keys[i];
 
   ifs.close();
+
+  printf("\n===== B-Tree App Output =====\n\n");
 
   {
     clock_gettime(CLOCK_MONOTONIC, &start);
