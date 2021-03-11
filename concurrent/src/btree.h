@@ -921,7 +921,9 @@ public:
  */
 btree::btree() {
   root = (char *)new page();
+  clflush((char *)root, sizeof(page));
   height = 1;
+  clflush((char *)this, sizeof(btree));
 }
 
 void btree::setNewRoot(char *new_root) {
