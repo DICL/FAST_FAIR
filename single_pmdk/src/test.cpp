@@ -46,7 +46,6 @@ int main(int argc, char **argv) {
     }
   }
 
-  int selected = num_data * selection_ratio;
   // Make or Read persistent pool
   TOID(btree) bt = TOID_NULL(btree);
   PMEMobjpool *pop;
@@ -65,8 +64,6 @@ int main(int argc, char **argv) {
 
   // Reading data
   entry_key_t *keys = new entry_key_t[num_data];
-  entry_key_t *query = new entry_key_t[2000];
-  unsigned long *bufs = new unsigned long[num_data];
 
   ifstream ifs;
   ifs.open(input_path);
@@ -77,23 +74,8 @@ int main(int argc, char **argv) {
     exit(-1);
   }
 
-  for (int i = 0; i < num_data; ++i) {
+  for (int i = 0; i < num_data; ++i)
     ifs >> keys[i];
-  }
-
-  ifs.close();
-
-  ifs.open("../workload/number1.txt");
-  if (!ifs) {
-    cout << "query loading error!" << endl;
-
-    delete[] query;
-    exit(-1);
-  }
-
-  for (int i = 0; i < 2000; ++i) {
-    ifs >> query[i];
-  }
 
   ifs.close();
 
@@ -110,7 +92,7 @@ int main(int argc, char **argv) {
                              (end.tv_nsec - start.tv_nsec);
     elapsed_time /= 1000;
 
-    printf("INSERT elapsed_time: %ld, Avg: %f\n", elapsed_time,
+    printf("INSERT elapsed_time: %lld, Avg: %f\n", elapsed_time,
            (double)elapsed_time / num_data);
     //    D_RW(bt)->printAll();
   }
@@ -139,36 +121,11 @@ int main(int argc, char **argv) {
                              (end.tv_nsec - start.tv_nsec);
     elapsed_time /= 1000;
 
-    printf("SEARCH elapsed_time: %ld, Avg: %f\n", elapsed_time,
+    printf("SEARCH elapsed_time: %lld, Avg: %f\n", elapsed_time,
            (double)elapsed_time / (num_data - Dead));
   }
 
-  clear_cache();
-
-  {
-    clock_gettime(CLOCK_MONOTONIC, &start);
-
-    int k = 1000;
-    for (int i = 0; i < k; i++) {
-      if (query[i] + selected < 100000000)
-        D_RW(bt)->btree_search_range(query[i], query[i] + selected, bufs);
-      else
-        k++;
-    }
-
-    clock_gettime(CLOCK_MONOTONIC, &end);
-
-    long long elapsed_time = (end.tv_sec - start.tv_sec) * 1000000000 +
-                             (end.tv_nsec - start.tv_nsec);
-    elapsed_time /= 1000;
-
-    printf("Range SEARCH elapsed_time: %ld, Avg: %f\n", elapsed_time,
-           (double)elapsed_time / num_data);
-  }
-
   delete[] keys;
-  delete[] query;
-  delete[] bufs;
 
   pmemobj_close(pop);
   return 0;

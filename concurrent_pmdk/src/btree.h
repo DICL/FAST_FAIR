@@ -922,9 +922,9 @@ public:
   // print a node
   void print() {
     if (hdr.leftmost_ptr == NULL)
-      printf("[%d] leaf %x \n", this->hdr.level, pmemobj_oid(this).off);
+      printf("[%d] leaf %lx \n", this->hdr.level, pmemobj_oid(this).off);
     else
-      printf("[%d] internal %x \n", this->hdr.level, pmemobj_oid(this).off);
+      printf("[%d] internal %lx \n", this->hdr.level, pmemobj_oid(this).off);
     printf("last_index: %d\n", hdr.last_index);
     printf("switch_counter: %d\n", hdr.switch_counter);
     printf("search direction: ");
@@ -934,12 +934,12 @@ public:
       printf("<-\n");
 
     if (hdr.leftmost_ptr != NULL)
-      printf("%x ", hdr.leftmost_ptr);
+      printf("%lx ", hdr.leftmost_ptr);
 
     for (int i = 0; records[i].ptr != NULL; ++i)
-      printf("%ld,%x ", records[i].key, records[i].ptr);
+      printf("%ld,%lx ", records[i].key, records[i].ptr);
 
-    printf("%x ", hdr.sibling_ptr.oid.off);
+    printf("%lx ", hdr.sibling_ptr.oid.off);
 
     printf("\n");
   }
@@ -971,7 +971,9 @@ void btree::constructor(PMEMobjpool *pool) {
   pop = pool;
   POBJ_NEW(pop, &root, page, NULL, NULL);
   D_RW(root)->constructor();
+  pmemobj_persist(pop, D_RW(root), sizeof(page));
   height = 1;
+  pmemobj_persist(pop, this, sizeof(btree));
 }
 
 void btree::setNewRoot(TOID(page) new_root) {
@@ -997,7 +999,7 @@ char *btree::btree_search(entry_key_t key) {
   }
 
   if (!t) {
-    printf("NOT FOUND %lu, t = %x\n", key, t);
+    printf("NOT FOUND %lu, t = %lx\n", key, t);
     return NULL;
   }
 
@@ -1124,7 +1126,7 @@ void btree::printAll() {
   pthread_mutex_lock(&print_mtx);
   int total_keys = 0;
   TOID(page) leftmost = root;
-  printf("root: %x\n", root.oid.off);
+  printf("root: %lx\n", root.oid.off);
   if (root.oid.off) {
     do {
       TOID(page) sibling = leftmost;
